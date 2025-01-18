@@ -3,8 +3,8 @@ import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ShoppingCart } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -31,10 +31,16 @@ const Auth = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-center">POS System Login</CardTitle>
+        <CardHeader className="space-y-2 text-center">
+          <div className="mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-4">
+            <ShoppingCart className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <CardTitle className="text-2xl font-bold">Pantry POS System</CardTitle>
+          <CardDescription>
+            Sign in to start your shift and manage sales
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <SupabaseAuth 
@@ -44,10 +50,17 @@ const Auth = () => {
               variables: {
                 default: {
                   colors: {
-                    brand: '#000000',
-                    brandAccent: '#333333',
+                    brand: 'rgb(var(--primary))',
+                    brandAccent: 'rgb(var(--primary))',
+                    brandButtonText: 'white',
                   },
                 },
+              },
+              className: {
+                container: 'w-full',
+                button: 'w-full px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-md',
+                input: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent',
+                label: 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1',
               },
             }}
             providers={[]}
