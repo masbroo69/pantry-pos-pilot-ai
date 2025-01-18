@@ -95,13 +95,6 @@ const Auth = () => {
               },
             }}
             providers={[]}
-            onError={(error) => {
-              if (error instanceof AuthApiError && error.message.includes("User already registered")) {
-                setError("This email is already registered. Please try signing in instead.");
-              } else {
-                setError(error.message);
-              }
-            }}
           />
         </CardContent>
       </Card>
