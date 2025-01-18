@@ -131,7 +131,9 @@ const Dashboard = () => {
 
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
-    removeAfterPrint: true
+    onAfterPrint: () => {
+      console.log('Print completed');
+    }
   });
 
   return (

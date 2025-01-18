@@ -1,13 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ShoppingCart } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthError } from "@supabase/supabase-js";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -25,10 +28,31 @@ const Auth = () => {
       if (event === "SIGNED_IN" && session) {
         navigate("/dashboard");
       }
+      // Clear error when auth state changes
+      setError("");
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Add error listener
+  useEffect(() => {
+    const handleAuthError = (error: AuthError) => {
+      if (error.message.includes("User already registered")) {
+        setError("This email is already registered. Please try signing in instead.");
+      } else {
+        setError(error.message);
+      }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "USER_ERROR") {
+        handleAuthError(session as unknown as AuthError);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -43,6 +67,11 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <SupabaseAuth 
             supabaseClient={supabase}
             appearance={{
