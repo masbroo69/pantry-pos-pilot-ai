@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ShoppingCart } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AuthError } from "@supabase/supabase-js";
+import { AuthError, AuthApiError } from "@supabase/supabase-js";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const Auth = () => {
     checkUser();
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session) {
         navigate("/dashboard");
       }
@@ -35,23 +35,25 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Add error listener
+  // Add error listener for sign-in/sign-up
   useEffect(() => {
-    const handleAuthError = (error: AuthError) => {
-      if (error.message.includes("User already registered")) {
-        setError("This email is already registered. Please try signing in instead.");
-      } else {
-        setError(error.message);
-      }
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "USER_ERROR") {
-        handleAuthError(session as unknown as AuthError);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_OUT") {
+        setError(""); // Clear errors on sign out
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Set up auth listeners
+    const authListener = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        setError(""); // Clear any errors on successful sign in
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      authListener.data.subscription.unsubscribe();
+    };
   }, []);
 
   return (
@@ -93,6 +95,13 @@ const Auth = () => {
               },
             }}
             providers={[]}
+            onError={(error) => {
+              if (error instanceof AuthApiError && error.message.includes("User already registered")) {
+                setError("This email is already registered. Please try signing in instead.");
+              } else {
+                setError(error.message);
+              }
+            }}
           />
         </CardContent>
       </Card>
