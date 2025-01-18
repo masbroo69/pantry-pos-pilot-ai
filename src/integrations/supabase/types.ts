@@ -9,7 +9,171 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      products: {
+        Row: {
+          barcode: string | null
+          category: string | null
+          cost_price: number | null
+          created_at: string
+          id: string
+          minimum_stock: number | null
+          name: string
+          price: number
+          sku: string | null
+          stock_quantity: number | null
+          updated_at: string
+        }
+        Insert: {
+          barcode?: string | null
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          id?: string
+          minimum_stock?: number | null
+          name: string
+          price: number
+          sku?: string | null
+          stock_quantity?: number | null
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string | null
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          id?: string
+          minimum_stock?: number | null
+          name?: string
+          price?: number
+          sku?: string | null
+          stock_quantity?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"] | null
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Relationships: []
+      }
+      sale_items: {
+        Row: {
+          id: string
+          product_id: string | null
+          quantity: number
+          sale_id: string | null
+          subtotal: number
+          unit_price: number
+        }
+        Insert: {
+          id?: string
+          product_id?: string | null
+          quantity: number
+          sale_id?: string | null
+          subtotal: number
+          unit_price: number
+        }
+        Update: {
+          id?: string
+          product_id?: string | null
+          quantity?: number
+          sale_id?: string | null
+          subtotal?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          cashier_id: string | null
+          created_at: string
+          id: string
+          payment_method: string
+          status: string | null
+          total_amount: number
+        }
+        Insert: {
+          cashier_id?: string | null
+          created_at?: string
+          id?: string
+          payment_method: string
+          status?: string | null
+          total_amount: number
+        }
+        Update: {
+          cashier_id?: string | null
+          created_at?: string
+          id?: string
+          payment_method?: string
+          status?: string | null
+          total_amount?: number
+        }
+        Relationships: []
+      }
+      shifts: {
+        Row: {
+          cashier_id: string | null
+          end_time: string | null
+          ending_cash: number | null
+          id: string
+          start_time: string
+          starting_cash: number
+          status: string | null
+          total_sales: number | null
+        }
+        Insert: {
+          cashier_id?: string | null
+          end_time?: string | null
+          ending_cash?: number | null
+          id?: string
+          start_time?: string
+          starting_cash: number
+          status?: string | null
+          total_sales?: number | null
+        }
+        Update: {
+          cashier_id?: string | null
+          end_time?: string | null
+          ending_cash?: number | null
+          id?: string
+          start_time?: string
+          starting_cash?: number
+          status?: string | null
+          total_sales?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +182,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "store_owner" | "warehouse_admin" | "shopkeeper"
     }
     CompositeTypes: {
       [_ in never]: never
