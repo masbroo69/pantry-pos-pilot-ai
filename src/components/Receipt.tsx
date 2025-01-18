@@ -18,7 +18,15 @@ interface ReceiptProps {
 
 const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(({ sale }, ref) => {
   return (
-    <div ref={ref} className="w-[80mm] bg-white p-4 text-sm" style={{ fontFamily: 'monospace' }}>
+    <div 
+      ref={ref} 
+      className="w-[80mm] bg-white p-4 text-sm" 
+      style={{ 
+        fontFamily: 'monospace',
+        minHeight: '297mm', // A4 height
+        margin: '0 auto'
+      }}
+    >
       <div className="text-center mb-4">
         <h2 className="font-bold text-lg">STORE NAME</h2>
         <p>123 Store Street</p>

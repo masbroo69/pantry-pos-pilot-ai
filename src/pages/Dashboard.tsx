@@ -20,6 +20,7 @@ const Dashboard = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentSale, setCurrentSale] = useState<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,12 +43,13 @@ const Dashboard = () => {
 
     if (error) {
       console.error('Error fetching products:', error);
+      toast.error("Failed to load products");
       return;
     }
 
     setProducts(data);
     const uniqueCategories = [...new Set(data.map(product => product.category))];
-    setCategories(uniqueCategories);
+    setCategories(uniqueCategories.filter(Boolean));
   };
 
   const filteredProducts = selectedCategory === 'all'
@@ -93,44 +95,53 @@ const Dashboard = () => {
       return;
     }
 
+    setIsProcessing(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const response = await supabase.functions.invoke('create-sale', {
-        body: {
-          items: cart,
-          total: calculateTotal(),
-          paymentMethod: 'cash'
-        }
+      const saleData = {
+        items: cart.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          unit_price: item.price,
+          subtotal: item.price * item.quantity,
+          name: item.name
+        })),
+        total_amount: calculateTotal(),
+        payment_method: 'cash'
+      };
+
+      const { data: sale, error } = await supabase.functions.invoke('create-sale', {
+        body: saleData
       });
 
-      if (response.error) throw new Error(response.error);
+      if (error) throw error;
 
-      // Prepare sale data for receipt
-      const saleData = {
-        ...response.data.sale,
+      setCurrentSale({
+        ...sale,
         items: cart.map(item => ({
           name: item.name,
           quantity: item.quantity,
           unit_price: item.price,
           subtotal: item.price * item.quantity
         }))
-      };
+      });
 
-      setCurrentSale(saleData);
       handlePrint();
       setCart([]);
       fetchProducts(); // Refresh products to update stock
       toast.success("Sale completed successfully!");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout error:', error);
-      toast.error("Failed to process sale");
+      toast.error(error.message || "Failed to process sale");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handlePrint = useReactToPrint({
-    contentRef: receiptRef,
+    content: () => receiptRef.current,
     onAfterPrint: () => {
       console.log('Print completed');
     }
@@ -159,6 +170,7 @@ const Dashboard = () => {
               key={product.id}
               onClick={() => addToCart(product)}
               className="p-4 border rounded hover:bg-gray-50 text-left"
+              disabled={product.stock_quantity <= 0}
             >
               <h3 className="font-bold">{product.name}</h3>
               <p>${product.price.toFixed(2)}</p>
@@ -207,15 +219,13 @@ const Dashboard = () => {
           <div className="text-xl font-bold mb-4">
             Total: ${calculateTotal().toFixed(2)}
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={handleCheckout}
-              className="flex-1"
-              disabled={cart.length === 0}
-            >
-              Checkout
-            </Button>
-          </div>
+          <Button
+            onClick={handleCheckout}
+            className="w-full"
+            disabled={cart.length === 0 || isProcessing}
+          >
+            {isProcessing ? "Processing..." : "Checkout"}
+          </Button>
         </div>
       </div>
 

@@ -17,7 +17,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     )
 
-    const { items, total, paymentMethod } = await req.json()
+    const { items, total_amount, payment_method } = await req.json()
     const authHeader = req.headers.get('Authorization')!
     const token = authHeader.replace('Bearer ', '')
     const { data: { user } } = await supabase.auth.getUser(token)
@@ -29,8 +29,8 @@ serve(async (req) => {
       .from('sales')
       .insert({
         cashier_id: user.id,
-        total_amount: total,
-        payment_method: paymentMethod,
+        total_amount,
+        payment_method,
         status: 'completed'
       })
       .select()
@@ -41,10 +41,10 @@ serve(async (req) => {
     // Create sale items
     const saleItems = items.map((item: any) => ({
       sale_id: sale.id,
-      product_id: item.id,
+      product_id: item.product_id,
       quantity: item.quantity,
-      unit_price: item.price,
-      subtotal: item.price * item.quantity
+      unit_price: item.unit_price,
+      subtotal: item.subtotal
     }))
 
     const { error: itemsError } = await supabase
@@ -56,12 +56,10 @@ serve(async (req) => {
     // Update product stock quantities
     for (const item of items) {
       const { error: stockError } = await supabase
-        .from('products')
-        .update({ 
-          stock_quantity: supabase.rpc('decrement', { x: item.quantity }),
-          updated_at: new Date().toISOString()
+        .rpc('decrement_stock', { 
+          product_id: item.product_id,
+          quantity: item.quantity 
         })
-        .eq('id', item.id)
 
       if (stockError) throw stockError
     }
@@ -71,6 +69,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
+    console.error('Error processing sale:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
