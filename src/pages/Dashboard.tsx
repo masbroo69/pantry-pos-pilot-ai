@@ -130,7 +130,8 @@ const Dashboard = () => {
   };
 
   const handlePrint = useReactToPrint({
-    content: () => receiptRef.current,
+    contentRef: receiptRef,
+    removeAfterPrint: true
   });
 
   return (
